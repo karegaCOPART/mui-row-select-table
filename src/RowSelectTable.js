@@ -38,6 +38,8 @@ export const RowSelectTableRow = ({
   onSelectRow = null,
   isRowSelected = null,
   rowSelectionEnabled = null,
+  selectableRow = null,
+  selectableCellStyle = (rowData) => { },
 }) => {
   const id = getRowId(rowData)
   return (
@@ -49,13 +51,13 @@ export const RowSelectTableRow = ({
       name={id}
     >
       {rowSelectionEnabled ? (
-        <td className={cn(cell)}>
-          <input checked={isRowSelected(rowData)} onClick={(e) => onSelectRow(e, rowData)} type="checkbox" />
+        <td className={cn(cell, selectableCellStyle(rowData))}>
+          <input checked={isRowSelected(rowData)} onClick={(e) => onSelectRow(e, rowData)} type="checkbox" disabled={selectableRow(rowData)} />
         </td>) : null}
 
         {columnMetadata.map(({ name, display = (x) => x, tdClassName, customComponent: CustomComponent }, i) => (
           CustomComponent ? <CustomComponent name={rowData.name} id={id} /> :
-          <td onMouseDown={() => onClickHold(id, i)} className={cn(cell, tdClassName)}>
+          <td onMouseDown={() => onClickHold(id, i)} className={cn(cell, tdClassName, selectableCellStyle(rowData))}>
             {display(rowData[name], rowData)}
           </td>
         ))}
@@ -218,7 +220,7 @@ class RowSelectTable extends Component {
       results, maxPage, setPage, isLoading, pageSize, currentPage, pageSizeOptions,
       getRowId, columnMetadata, sortColumn, sortAscending, noDataMessage: NoDataMessage,
       rowSelectionEnabled, onSelectAllRows, isAllRowsSelected, onSelectRow, isRowSelected,
-      showFooter, footerLabels,
+      selectableCellStyle, selectableRow, toggledRowContent, toggledRowColumnMetadata, showFooter, footerLabels,
     } = this.props
     const pagerProps = { maxPage, setPage, resultsPerPage: pageSize, currentPage, pageSizeOptions, footerLabels }
     const searchReturnsResults = !isLoading && results && results.length !== 0 && showFooter
@@ -226,20 +228,68 @@ class RowSelectTable extends Component {
 
     const displayResults = results.length === 0
       ? <tr><td className={cell} colSpan={columnMetadata.length}><NoDataMessage /></td></tr>
-      : results.map((r, i) =>
-        <RowSelectTableRow
-          key={i}
-          data={r}
-          getRowId={getRowId}
-          onMouseEnter={this.handleRowMouseEnter}
-          onClickHold={this.handleRowClickHold}
-          onClick={this.handleRowClick}
-          selectedLotId={this.state.selectedLotId}
-          columnMetadata={columnMetadata}
-          rowSelectionEnabled={rowSelectionEnabled}
-          onSelectRow={onSelectRow}
-          isRowSelected={isRowSelected}
-        />
+      : results.map((r, i) => {
+          if (r.toggled) {
+            let rowComponent = []
+
+            rowComponent.push(
+              <RowSelectTableRow
+                key={i}
+                data={r}
+                getRowId={getRowId}
+                onMouseEnter={this.handleRowMouseEnter}
+                onClickHold={this.handleRowClickHold}
+                onClick={this.handleRowClick}
+                selectedLotId={this.state.selectedLotId}
+                columnMetadata={columnMetadata}
+                rowSelectionEnabled={rowSelectionEnabled}
+                onSelectRow={onSelectRow}
+                isRowSelected={isRowSelected}
+                selectableRow={selectableRow}
+                selectableCellStyle={selectableCellStyle}
+                toggledRowContent={toggledRowContent}
+                toggledRowColumnMetadata={toggledRowColumnMetadata}
+              />
+            )
+
+            toggledRowContent(r).map((cr, ci) => {
+              rowComponent.push(
+                <RowSelectTableRow
+                  key={i + '_' + ci + '_toggleRow'}
+                  data={cr}
+                  getRowId={getRowId}
+                  onMouseEnter={this.handleRowMouseEnter}
+                  onClickHold={this.handleRowClickHold}
+                  onClick={this.handleRowClick}
+                  selectedLotId={this.state.selectedLotId}
+                  columnMetadata={columnMetadata}
+                  rowSelectionEnabled={rowSelectionEnabled}
+                  onSelectRow={onSelectRow}
+                  isRowSelected={isRowSelected}
+                  selectableRow={selectableRow}
+                  selectableCellStyle={selectableCellStyle}
+                />
+              )
+            })
+
+            return rowComponent
+          }
+          else {
+            <RowSelectTableRow
+              key={i}
+              data={r}
+              getRowId={getRowId}
+              onMouseEnter={this.handleRowMouseEnter}
+              onClickHold={this.handleRowClickHold}
+              onClick={this.handleRowClick}
+              selectedLotId={this.state.selectedLotId}
+              columnMetadata={columnMetadata}
+              rowSelectionEnabled={rowSelectionEnabled}
+              onSelectRow={onSelectRow}
+              isRowSelected={isRowSelected}
+            />
+          }
+        }
       )
 
     return (
@@ -289,6 +339,10 @@ RowSelectTable.propTypes = {
   isRowSelected: PropTypes.bool,
   onSelectRow: PropTypes.func,
   listenKeyboard: PropTypes.bool,
+  selectableRow: PropTypes.func,
+  selectableCellStyle: PropTypes.func,
+  toggledRowContent: PropTypes.any,
+  toggledRowColumnMetadata: PropTypes.any,
   showFooter: PropTypes.bool,
 }
 
