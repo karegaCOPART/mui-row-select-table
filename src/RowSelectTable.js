@@ -38,6 +38,7 @@ export const RowSelectTableRow = ({
   onSelectRow = null,
   isRowSelected = null,
   rowSelectionEnabled = null,
+  selectableRow = null,
 }) => {
   const id = getRowId(rowData)
   return (
@@ -50,7 +51,7 @@ export const RowSelectTableRow = ({
     >
       {rowSelectionEnabled ? (
         <td className={cn(cell)}>
-          <input checked={isRowSelected(rowData)} onClick={(e) => onSelectRow(e, rowData)} type="checkbox" />
+          <input checked={isRowSelected(rowData)} disabled={selectableRow(rowData)} onClick={(e) => onSelectRow(e, rowData)} type="checkbox" />
         </td>) : null}
 
         {columnMetadata.map(({ name, display = (x) => x, tdClassName, customComponent: CustomComponent }, i) => (
@@ -218,7 +219,7 @@ class RowSelectTable extends Component {
       results, maxPage, setPage, isLoading, pageSize, currentPage, pageSizeOptions,
       getRowId, columnMetadata, sortColumn, sortAscending, noDataMessage: NoDataMessage,
       rowSelectionEnabled, onSelectAllRows, isAllRowsSelected, onSelectRow, isRowSelected,
-      showFooter, footerLabels,
+      showFooter, footerLabels, selectableRow
     } = this.props
     const pagerProps = { maxPage, setPage, resultsPerPage: pageSize, currentPage, pageSizeOptions, footerLabels }
     const searchReturnsResults = !isLoading && results && results.length !== 0 && showFooter
@@ -239,6 +240,7 @@ class RowSelectTable extends Component {
           rowSelectionEnabled={rowSelectionEnabled}
           onSelectRow={onSelectRow}
           isRowSelected={isRowSelected}
+          selectableRow={selectableRow}
         />
       )
 
@@ -290,6 +292,7 @@ RowSelectTable.propTypes = {
   onSelectRow: PropTypes.func,
   listenKeyboard: PropTypes.bool,
   showFooter: PropTypes.bool,
+  selectableRow: PropTypes.func,
 }
 
 export default RowSelectTable
